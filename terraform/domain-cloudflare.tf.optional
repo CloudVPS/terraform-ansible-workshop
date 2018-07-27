@@ -1,0 +1,21 @@
+# CloudFlare Provider
+# https://www.terraform.io/docs/providers/cloudflare/index.html
+provider "cloudflare" {
+  email = "${var.cloudflare_email}"
+  token = "${var.cloudflare_token}"
+}
+
+variable "cloudflare_email" {}
+
+variable "cloudflare_token" {}
+
+variable "cloudflare_domain" {}
+
+resource "cloudflare_record" "workshop" {
+  domain     = "${var.cloudflare_domain}"
+  name       = "workshop"
+  value      = "${openstack_networking_floatingip_v2.fip_1.address}"
+  type       = "A"
+  ttl        = 120
+  depends_on = ["openstack_networking_floatingip_v2.fip_1"]
+}
