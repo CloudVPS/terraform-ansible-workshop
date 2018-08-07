@@ -51,11 +51,14 @@ resource "openstack_networking_port_v2" "port_ha_vip" {
     "subnet_id"     = "${openstack_networking_subnet_v2.subnet_internal.id}"
     "ip_address"    = "${var.vip_address}"
   }
+
+  depends_on        = ["openstack_networking_router_interface_v2.router_interface"]
+
 }
 
 resource "openstack_networking_port_v2" "port_lb" {
   count             = "${var.lb_count}"
-  name              = "${var.prefix}-lb-${count.index}-port"
+  name              = "${var.prefix}lb-${count.index}-port"
   network_id        = "${openstack_networking_network_v2.network_internal.id}"
   admin_state_up    = "true"
   fixed_ip {
@@ -69,15 +72,18 @@ resource "openstack_networking_port_v2" "port_lb" {
   allowed_address_pairs {
     ip_address      = "1.0.0.0/0"
   }
+
+  depends_on        = ["openstack_networking_router_interface_v2.router_interface"]
+
 }
 
 resource "openstack_compute_instance_v2" "lb" {
   count             = "${var.lb_count}"
-  name              = "${var.prefix}-lb-${count.index}"
+  name              = "${var.prefix}lb-${count.index}"
   availability_zone = "${element(var.availability_zones, count.index % length(var.availability_zones))}"
   image_name        = "${var.image_name}"
   flavor_name       = "${var.flavor_name}"
-  key_pair          = "${var.prefix}keypair"
+  key_pair          = "${var.key_pair}"
   user_data         = "${file("common_user_data.sh")}"
   security_groups   = ["default", "${openstack_compute_secgroup_v2.secgroup_web_public.name}", "${openstack_compute_secgroup_v2.secgroup_icmp_public.name}"]
   network {
@@ -97,6 +103,13 @@ resource "openstack_compute_instance_v2" "lb" {
     bastion_host    = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
   }
 
+  ## Add the generated bastion key
+  provisioner "remote-exec" {
+    inline = [
+      "echo '${openstack_compute_keypair_v2.keypair.public_key}' >> ~/.ssh/authorized_keys",
+      "chmod 644 ~/.ssh/authorized_keys"
+    ]
+  }
   #provisioner "remote-exec" {
   #  inline = [
   #  "#! /bin/sh",

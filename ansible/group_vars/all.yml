@@ -1,0 +1,30 @@
+---
+
+snmp:
+  community: rocommunity
+  systemlocation: CLOUDVPS CLOUD
+  systemcontact: tech@noreply.org
+  monitor: 192.168.123.0/24
+
+nrpe:
+  allowed_hosts:
+    - 192.168.123.0/24
+
+sysctl:
+#increase file discriptors
+  fs.file-max: 10000000
+  fs.nr_open: 10000000
+#To reduce memory usage per connection (and increase possible connections):
+  net.ipv4.tcp_mem: "786432 1697152 1945728"
+  net.ipv4.tcp_rmem: "4096 4096 16777216"
+  net.ipv4.tcp_wmem: "4096 4096 16777216"
+#Increase local port range for (proxy) connetions
+  net.ipv4.ip_local_port_range: "1000 65535"
+#Increase conntrack and lower timeouts
+#  net.netfilter.nf_conntrack_max  : 1048576
+#  net.netfilter.nf_conntrack_tcp_timeout_established: 21600
+#  net.netfilter.nf_conntrack_generic_timeout: 60
+#  net.netfilter.nf_conntrack_tcp_timeout_close: 10
+#  net.netfilter.nf_conntrack_tcp_timeout_close_wait: 20
+#  net.netfilter.nf_conntrack_tcp_timeout_fin_wait: 30
+

@@ -25,18 +25,18 @@ resource "openstack_compute_instance_v2" "bastion" {
     command =  <<EOT
       sed -i '/[T]ERRAFORM_SSH_CONFIG_START/,/[T]ERRAFORM_SSH_CONFIG_END/d' ~/.ssh/config
       echo '# TERRAFORM_SSH_CONFIG_START
-      Host ${var.bastion_name} ${openstack_networking_floatingip_v2.floatip_bastion.address}
-      StrictHostKeyChecking no
-      UserKnownHostsFile=/dev/null
-      Hostname ${openstack_networking_floatingip_v2.floatip_bastion.address}
-      User root
+Host ${var.bastion_name} ${openstack_networking_floatingip_v2.floatip_bastion.address}
+  StrictHostKeyChecking no
+  UserKnownHostsFile=/dev/null
+  Hostname ${openstack_networking_floatingip_v2.floatip_bastion.address}
+  User root
 
-      Host ${var.subnet_wildcard}
-      StrictHostKeyChecking no
-      UserKnownHostsFile=/dev/null
-      User root
-      ProxyCommand ssh ${var.bastion_name} exec nc %h %p 2>/dev/null
-      # TERRAFORM_SSH_CONFIG_END' >> ~/.ssh/config
+Host ${var.subnet_wildcard}
+  StrictHostKeyChecking no
+  UserKnownHostsFile=/dev/null
+  User root
+  ProxyCommand ssh ${var.bastion_name} exec nc %h %p 2>/dev/null
+# TERRAFORM_SSH_CONFIG_END' >> ~/.ssh/config
       
     EOT
   }
@@ -73,12 +73,30 @@ resource "openstack_compute_instance_v2" "web" {
   availability_zone = "${element(var.availability_zones, count.index % length(var.availability_zones))}"
   image_name        = "${var.image_name}"
   flavor_name       = "${var.flavor_name}"
-  key_pair          = "${var.prefix}keypair"
+  key_pair          = "${var.key_pair}"
   security_groups   = ["default", "${openstack_compute_secgroup_v2.secgroup_ssh_private.name}", "${openstack_compute_secgroup_v2.secgroup_icmp_private.name}"]
   user_data         = "${file("bootstrap.sh")}"
 
   network {
     name = "${openstack_networking_network_v2.network_internal.name}"
+  }
+
+  connection {
+    type                = "ssh"
+    user                = "root"
+#    private_key         = "${var.key_pair}"
+    bastion_host        = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
+    bastion_port        = 22
+    bastion_user        = "root"
+
+  }
+
+  ## Add the generated bastion key to authorized_keys
+  provisioner "remote-exec" {
+    inline = [
+      "echo '${openstack_compute_keypair_v2.keypair.public_key}' >> ~/.ssh/authorized_keys",
+      "chmod 644 ~/.ssh/authorized_keys"
+    ]
   }
 }
 
@@ -88,10 +106,24 @@ resource "openstack_compute_instance_v2" "db" {
   availability_zone = "${element(var.availability_zones, count.index % length(var.availability_zones))}"
   image_name        = "${var.image_name}"
   flavor_name       = "${var.flavor_name}"
-  key_pair          = "${var.prefix}keypair"
+  key_pair          = "${var.key_pair}"
   security_groups   = ["default", "${openstack_compute_secgroup_v2.secgroup_ssh_private.name}", "${openstack_compute_secgroup_v2.secgroup_icmp_private.name}"]
 
   network {
     name = "${openstack_networking_network_v2.network_internal.name}"
+  }
+
+  connection {
+    type            = "ssh"
+    user            = "root"
+    bastion_host    = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
+  }
+
+  ## Add the generated bastion key to authorized_keys
+  provisioner "remote-exec" {
+    inline = [
+      "echo '${openstack_compute_keypair_v2.keypair.public_key}' >> ~/.ssh/authorized_keys",
+      "chmod 644 ~/.ssh/authorized_keys"
+    ]
   }
 }
