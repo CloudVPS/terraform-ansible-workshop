@@ -1,0 +1,57 @@
+---
+
+- hosts: all
+
+  roles:
+    - nrpe
+    - ntp
+    - rsyslog-client
+    - snmp
+    
+  tasks:
+
+  - name: ensure certain packages are installed
+    apt:  pkg={{ item }} state=present update_cache=yes
+    with_items:
+      - atop
+      - tcpdump
+    when: ansible_os_family == 'Debian'
+
+  - name: ensure certain packages are installed
+    yum:  pkg={{ item }} state=present
+    with_items:
+      - atop
+      - tcpdump
+    when: ansible_os_family == 'RedHat'
+
+  - name: disable breaking updates
+    shell: 'for PACKAGE in nagios-nrpe-plugin nagios-nrpe-server grub-common grub-pc grub-pc-bin grub2-common haproxy apache2 apache2-mpm-prefork apache2-utils apache2.2-bin apache2.2-common  keepalived unison  php5 php5-cli php5-common php5-curl php5-gd php5-mcrypt php5-mysql mysql-server php-pear php5-dev mysql-server-core-5.5 libapache2-mod-php5 facter puppet puppet-common; do echo "Marking ${PACKAGE} as hold."; echo "${PACKAGE} hold" | dpkg --set-selections; done'
+    tags: disable_updates
+    when: ansible_os_family == 'Debian'
+
+  - name: set proper values for history commands
+    lineinfile:
+      regexp={{ item.regexp }}
+      dest=/root/.bashrc
+      line={{ item.line }}
+      backup=yes
+    with_items:
+      - { regexp: 'export HISTTIMEFORMAT=.*', line: 'export HISTTIMEFORMAT="[%F %T] "' }
+      - { regexp: 'export HISTSIZE=.*', line: 'export HISTSIZE=10000' }
+      - { regexp: 'export HISTCONTROL=.*', line: 'export HISTCONTROL=erasedups' }
+      - { regexp: '^shopt.*', line: 'shopt -s histappend' }
+    tags:
+      - bashrc
+
+  - name: Set sane sysctl values
+    sysctl:
+      name={{ item.key }}
+      value={{ item.value }}
+      state=present
+      reload=yes
+      sysctl_set=yes 
+      ignoreerrors=yes
+    with_dict: "{{ sysctl }}"
+    tags:
+     - sysctl
+
