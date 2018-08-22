@@ -73,7 +73,7 @@ resource "openstack_networking_port_v2" "port_lb" {
     ip_address      = "1.0.0.0/0"
   }
 
-  depends_on        = ["openstack_networking_router_interface_v2.router_interface"]
+  depends_on        = ["openstack_networking_router_interface_v2.router_interface", "openstack_networking_floatingip_v2.fip_1"]
 
 }
 
@@ -92,22 +92,27 @@ resource "openstack_compute_instance_v2" "lb" {
  }
   
   metadata {
-    ha_vip_address  = "${openstack_networking_port_v2.port_ha_vip.fixed_ip.0.ip_address}"
-    ha_floatingips  = "${openstack_networking_floatingip_v2.fip_1.address}"
-    ha_execution    = "1"
+    ha_vip_address                = "${openstack_networking_port_v2.port_ha_vip.fixed_ip.0.ip_address}"
+    ha_floatingips                = "${openstack_networking_floatingip_v2.fip_1.address}"
+    ha_execution                  = "1"
+    keepalived.notification_email = "cees@cloudvps.com"
+    keepalived.pass               = "${random_string.secret1.result}"
+    keepalived.intvip             = "${openstack_networking_port_v2.port_ha_vip.fixed_ip.0.ip_address}"
+    keepalived.intnic             = "eth0"
+
   }
 
   connection {
     type            = "ssh"
-    user            = "root"
+    user            = "${var.user}"
     bastion_host    = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
   }
 
   ## Add the generated bastion key
   provisioner "remote-exec" {
     inline = [
-      "echo '${openstack_compute_keypair_v2.keypair.public_key}' >> ~/.ssh/authorized_keys",
-      "chmod 644 ~/.ssh/authorized_keys"
+      "sudo echo '${openstack_compute_keypair_v2.keypair.public_key}' >> /root/.ssh/authorized_keys",
+      "sudo chmod 644 /root/.ssh/authorized_keys"
     ]
   }
   #provisioner "remote-exec" {

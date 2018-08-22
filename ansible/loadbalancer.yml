@@ -1,0 +1,59 @@
+---
+
+- hosts: lb
+  become: true
+
+# redefine the vars that were parsed from terraform
+  vars:
+    keepalived:
+      notification_email: 
+        - "{{ keepalived_notification_email }}"
+      pass: "{{ keepalived_pass }}"
+      intvip: 
+        - "{{ keepalived_intvip }}"
+      intnic: "{{ keepalived_intnic }}"
+
+
+  pre_tasks:
+  - debug:
+      msg: "{{ keepalived_notification_email }}"
+    tags: keepalived
+
+#  - copy:
+#      src={{ item }}
+#      dest=/etc/ssl/private/
+#      backup=no
+#    with_fileglob:
+#      - files/loadbalancer/ssl/*
+#    tags: ssl
+#    notify: restart haproxy
+
+#  - name: copy whitelist
+#    copy:
+#      src=files/loadbalancer/whitelist.lst
+#      dest=/etc/haproxy/whitelist.lst
+#      backup=yes
+#    tags:
+#     - haproxy
+#    notify:
+#     - restart haproxy
+
+  roles:
+#    - iptables
+    - keepalived
+    - rsyslog-server
+    - {role: haproxy, haproxy_external_template: "files/autoscale_haproxy.cfg.j2"}
+    - { role: nrpe, nrpe_proxy: true }
+
+  tasks:
+#  - name: copy keepalived script
+#    copy:
+#      src=files/loadbalancer/notify-keepalived.sh
+#      dest=/usr/local/bin/keepalived-intern.sh
+#      backup=yes
+#    tags: keepalived
+
+#  - name: copy ssl pem files
+
+
+

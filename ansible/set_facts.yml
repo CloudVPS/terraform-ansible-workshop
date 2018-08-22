@@ -1,0 +1,28 @@
+---
+
+# Gather facts, check connectivity and copy metadata to hostvars
+- hosts: all
+ 
+  tasks:
+#    - debug:
+#        msg: "{{ hostvars[inventory_hostname] }}"
+
+#    - debug:
+#        msg: "{{item.key.split('.')[1]}} ':' {{item.key.split('.')[2]|default(0) }} ':' {{item.value}}"
+#      with_dict: "{{ hostvars[inventory_hostname] }}"
+#      when: 
+#        - '"metadata" in item.key'
+#        - '"%" not in item.key'
+
+
+    - name: Set facts by stripping the first dotted value from metadata
+      set_fact:
+        "{{item.key.split('.')[1:10] | join('_') }}": "{{ item.value }}"
+      with_dict: "{{ hostvars[inventory_hostname] }}"
+      when: 
+        - '"metadata" in item.key'
+        - '"%" not in item.key'
+      tags: always
+
+#    - debug:
+#        msg: "{{ hostvars[inventory_hostname]}}" 

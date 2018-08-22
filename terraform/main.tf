@@ -10,6 +10,7 @@ resource "openstack_compute_instance_v2" "bastion" {
   image_name        = "${var.image_name}"
   flavor_name       = "${var.flavor_name}"
   key_pair          = "${var.key_pair}"
+  user_data         = "#include\nhttps://raw.githubusercontent.com/ceesios/terraform-ansible-workshop/master/user_data_workshopserver.sh"
   security_groups   = ["default", "${openstack_compute_secgroup_v2.secgroup_ssh_public.name}"]
   network {
     name            = "${openstack_networking_network_v2.network_internal.name}"
@@ -17,7 +18,7 @@ resource "openstack_compute_instance_v2" "bastion" {
   
   connection {
     type            = "ssh"
-    user            = "root"
+    user            = "${var.user}"
     host            = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
   }
   # Enter the bastion host into .ssh/config
@@ -29,12 +30,12 @@ Host ${var.bastion_name} ${openstack_networking_floatingip_v2.floatip_bastion.ad
   StrictHostKeyChecking no
   UserKnownHostsFile=/dev/null
   Hostname ${openstack_networking_floatingip_v2.floatip_bastion.address}
-  User root
+  User ubuntu
 
 Host ${var.subnet_wildcard}
   StrictHostKeyChecking no
   UserKnownHostsFile=/dev/null
-  User root
+  User ubuntu
   ProxyCommand ssh ${var.bastion_name} exec nc %h %p 2>/dev/null
 # TERRAFORM_SSH_CONFIG_END' >> ~/.ssh/config
       
@@ -50,18 +51,18 @@ resource "openstack_compute_floatingip_associate_v2" "fip_bastion" {
   # Provision after associating a floating IP
   connection {
     type            = "ssh"
-    user            = "root"
+    user            = "${var.user}"
     host            = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
   }
   ## Provisioner is done on the floating IP
-  provisioner "remote-exec" {
-    inline = [
-      "echo '${openstack_compute_keypair_v2.keypair.private_key}' >> ~/.ssh/id_rsa",
-      "chmod 600 ~/.ssh/id_rsa",
-      "echo '${openstack_compute_keypair_v2.keypair.public_key}' >> ~/.ssh/id_rsa.pub",
-      "chmod 644 ~/.ssh/id_rsa.pub"
-    ]
-  }
+#  provisioner "remote-exec" {
+#    inline = [
+#      "sudo echo '${openstack_compute_keypair_v2.keypair.private_key}' >> /root/.ssh/id_rsa",
+#      "sudo chmod 600 /root/.ssh/id_rsa",
+#      "sudo echo '${openstack_compute_keypair_v2.keypair.public_key}' >> /root/.ssh/id_rsa.pub",
+#      "sudo chmod 644 /root/.ssh/id_rsa.pub"
+#    ]
+#  }
 }
 
 
@@ -83,21 +84,21 @@ resource "openstack_compute_instance_v2" "web" {
 
   connection {
     type                = "ssh"
-    user                = "root"
+    user                = "${var.user}"
 #    private_key         = "${var.key_pair}"
     bastion_host        = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
     bastion_port        = 22
-    bastion_user        = "root"
+    bastion_user        = "${var.user}"
 
   }
 
   ## Add the generated bastion key to authorized_keys
-  provisioner "remote-exec" {
-    inline = [
-      "echo '${openstack_compute_keypair_v2.keypair.public_key}' >> ~/.ssh/authorized_keys",
-      "chmod 644 ~/.ssh/authorized_keys"
-    ]
-  }
+#  provisioner "remote-exec" {
+#    inline = [
+#      "sudo echo '${openstack_compute_keypair_v2.keypair.public_key}' >> /root/.ssh/authorized_keys",
+#      "sudo chmod 644 /root/.ssh/authorized_keys"
+#    ]
+#  }
 }
 
 resource "openstack_compute_instance_v2" "db" {
@@ -115,15 +116,15 @@ resource "openstack_compute_instance_v2" "db" {
 
   connection {
     type            = "ssh"
-    user            = "root"
+    user            = "${var.user}"
     bastion_host    = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
   }
 
   ## Add the generated bastion key to authorized_keys
-  provisioner "remote-exec" {
-    inline = [
-      "echo '${openstack_compute_keypair_v2.keypair.public_key}' >> ~/.ssh/authorized_keys",
-      "chmod 644 ~/.ssh/authorized_keys"
-    ]
-  }
+#  provisioner "remote-exec" {
+#    inline = [
+#      "sudo echo '${openstack_compute_keypair_v2.keypair.public_key}' >> /root/.ssh/authorized_keys",
+#      "sudo chmod 644 /root/.ssh/authorized_keys"
+#    ]
+#  }
 }
