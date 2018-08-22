@@ -1,0 +1,6 @@
+---
+
+keepalived:
+  state: EQUAL
+  router_id: 99
+
