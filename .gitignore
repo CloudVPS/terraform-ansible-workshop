@@ -1,8 +1,7 @@
-terraform/.terraform/
+.ansible/
+.terraform/
+.DS_Store
+ansible.cfg
 terraform.tfstate*
-*.tfvars
-
-ansible/.ansible/
-ansible/ansible.cfg
 *.retry
-
+*.tfvars
