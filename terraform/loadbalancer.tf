@@ -43,8 +43,9 @@
 
 ## LOADBALANCER instances with VRRP
 resource "openstack_networking_port_v2" "port_ha_vip" {
-  name              = "${var.prefix}-port_ha_vip"
+  name              = "${var.prefix}port_ha_vip"
   network_id        = "${openstack_networking_network_v2.network_internal.id}"
+  security_group_ids = ["${var.default_secgroup_id}", "${openstack_compute_secgroup_v2.secgroup_web_public.id}", "${openstack_compute_secgroup_v2.secgroup_icmp_public.id}"]
   admin_state_up    = "true"
 
   fixed_ip {
@@ -52,7 +53,7 @@ resource "openstack_networking_port_v2" "port_ha_vip" {
     "ip_address"    = "${var.vip_address}"
   }
 
-  depends_on        = ["openstack_networking_router_interface_v2.router_interface"]
+  depends_on        = ["openstack_networking_router_interface_v2.router_interface", "openstack_compute_secgroup_v2.secgroup_web_public", "openstack_compute_secgroup_v2.secgroup_icmp_public"]
 
 }
 
@@ -60,7 +61,9 @@ resource "openstack_networking_port_v2" "port_lb" {
   count             = "${var.lb_count}"
   name              = "${var.prefix}lb-${count.index}-port"
   network_id        = "${openstack_networking_network_v2.network_internal.id}"
+  security_group_ids = ["${var.default_secgroup_id}", "${openstack_compute_secgroup_v2.secgroup_web_public.id}", "${openstack_compute_secgroup_v2.secgroup_icmp_public.id}"]
   admin_state_up    = "true"
+
   fixed_ip {
     "subnet_id"     = "${openstack_networking_subnet_v2.subnet_internal.id}"
   }
@@ -85,11 +88,14 @@ resource "openstack_compute_instance_v2" "lb" {
   flavor_name       = "${var.flavor_name}"
   key_pair          = "${var.key_pair}"
   user_data         = "${file("common_user_data.sh")}"
-  security_groups   = ["default", "${openstack_compute_secgroup_v2.secgroup_web_public.name}", "${openstack_compute_secgroup_v2.secgroup_icmp_public.name}"]
+# When attaching the instance to networks using Ports, place the security groups on the Port and not the instance.
+#  security_groups   = ["default", "${openstack_compute_secgroup_v2.secgroup_web_public.name}", "${openstack_compute_secgroup_v2.secgroup_icmp_public.name}"]
+  depends_on        = ["openstack_compute_secgroup_v2.secgroup_web_public", "openstack_compute_secgroup_v2.secgroup_icmp_public", "openstack_compute_instance_v2.bastion"]
+
   network {
     name            = "${openstack_networking_network_v2.network_internal.name}"
     port            = "${element(openstack_networking_port_v2.port_lb.*.id, count.index)}"
- }
+  }
   
   metadata {
     ha_vip_address                = "${openstack_networking_port_v2.port_ha_vip.fixed_ip.0.ip_address}"
@@ -99,13 +105,14 @@ resource "openstack_compute_instance_v2" "lb" {
     keepalived.pass               = "${random_string.secret1.result}"
     keepalived.intvip             = "${openstack_networking_port_v2.port_ha_vip.fixed_ip.0.ip_address}"
     keepalived.intnic             = "eth0"
-
   }
 
   connection {
-    type            = "ssh"
-    user            = "${var.user}"
-    bastion_host    = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
+    type                = "ssh"
+    user                = "${var.user}"
+    bastion_host        = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
+    bastion_port        = 22
+    bastion_user        = "${var.user}"
   }
 
   ## Add the generated bastion key

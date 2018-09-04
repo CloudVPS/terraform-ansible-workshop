@@ -30,12 +30,12 @@ Host ${var.bastion_name} ${openstack_networking_floatingip_v2.floatip_bastion.ad
   StrictHostKeyChecking no
   UserKnownHostsFile=/dev/null
   Hostname ${openstack_networking_floatingip_v2.floatip_bastion.address}
-  User ubuntu
+  User ${var.user}
 
 Host ${var.subnet_wildcard}
   StrictHostKeyChecking no
   UserKnownHostsFile=/dev/null
-  User ubuntu
+  User ${var.user}
   ProxyCommand ssh ${var.bastion_name} exec nc %h %p 2>/dev/null
 # TERRAFORM_SSH_CONFIG_END' >> ~/.ssh/config
       
@@ -66,8 +66,6 @@ resource "openstack_compute_floatingip_associate_v2" "fip_bastion" {
 }
 
 
-
-
 resource "openstack_compute_instance_v2" "web" {
   count             = "${var.web_count}"
   name              = "${var.prefix}web${count.index}"
@@ -92,6 +90,8 @@ resource "openstack_compute_instance_v2" "web" {
 
   }
 
+  depends_on        = ["openstack_compute_secgroup_v2.secgroup_ssh_private", "openstack_compute_secgroup_v2.secgroup_icmp_private", "openstack_compute_instance_v2.bastion"]
+
   ## Add the generated bastion key to authorized_keys
 #  provisioner "remote-exec" {
 #    inline = [
@@ -101,6 +101,7 @@ resource "openstack_compute_instance_v2" "web" {
 #  }
 }
 
+
 resource "openstack_compute_instance_v2" "db" {
   count             = "${var.db_count}"
   name              = "${var.prefix}db${count.index}"
@@ -108,7 +109,7 @@ resource "openstack_compute_instance_v2" "db" {
   image_name        = "${var.image_name}"
   flavor_name       = "${var.flavor_name}"
   key_pair          = "${var.key_pair}"
-  security_groups   = ["default", "${openstack_compute_secgroup_v2.secgroup_ssh_private.name}", "${openstack_compute_secgroup_v2.secgroup_icmp_private.name}"]
+  security_groups   = [ "default"]
 
   network {
     name = "${openstack_networking_network_v2.network_internal.name}"
@@ -119,6 +120,8 @@ resource "openstack_compute_instance_v2" "db" {
     user            = "${var.user}"
     bastion_host    = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
   }
+
+  depends_on        = ["openstack_compute_instance_v2.bastion"]
 
   ## Add the generated bastion key to authorized_keys
 #  provisioner "remote-exec" {
