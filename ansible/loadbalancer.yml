@@ -1,7 +1,6 @@
 ---
 
 - hosts: lb
-  become: true
 
 # redefine the vars that were parsed from terraform
   vars:
@@ -15,10 +14,6 @@
 
 
   pre_tasks:
-  - debug:
-      msg: "{{ keepalived_notification_email }}"
-    tags: keepalived
-
 #  - copy:
 #      src={{ item }}
 #      dest=/etc/ssl/private/

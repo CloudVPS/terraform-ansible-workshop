@@ -1,0 +1,43 @@
+---
+
+php_version: 7.2
+
+packages:
+  - nginx
+  - composer
+  - mysql-client 
+  - php{{ php_version }}-fpm # server-side, HTML-embedded scripting language (FPM-CGI binary)
+#  - imagemagick
+#  - php-bcmath # Bcmath module for PHP
+  - php-bz2 # bzip2 module for PHP
+  - php-cgi # server-side, HTML-embedded scripting language (CGI binary)
+  - php-curl # CURL module for PHP
+#  - php-dba # DBA module for PHP
+#  - php-dev # Files for PHP7.0 module development
+#  - php-enchant # Enchant module for PHP
+  - php-gd # GD module for PHP
+#  - php-gmp # GMP module for PHP
+#  - php-imap # IMAP module for PHP
+#  - php-interbase # Interbase module for PHP
+#  - php-intl # Internationalisation module for PHP
+#  - php-json # JSON module for PHP
+#  - php-ldap # LDAP module for PHP
+  - php-mbstring # MBSTRING module for PHP
+#  - php-mcrypt # libmcrypt module for PHP (depricated in PHP 7.2)
+  - php-mysql # MySQL module for PHP
+#  - php-odbc # ODBC module for PHP
+#  - php-opcache # Zend OpCache module for PHP
+#  - php-pgsql # PostgreSQL module for PHP
+#  - php-phpdbg # server-side, HTML-embedded scripting language (PHPDBG binary)
+#  - php-pspell # pspell module for PHP
+#  - php-readline # readline module for PHP
+#  - php-recode # recode module for PHP
+  - php-snmp # SNMP module for PHP
+#  - php-soap # SOAP module for PHP
+#  - php-sqlite3 # SQLite3 module for PHP
+#  - php-sybase # Sybase module for PHP
+#  - php-tidy # tidy module for PHP
+#  - php-xml # DOM, SimpleXML, WDDX, XML, and XSL module for PHP
+#  - php-xmlrpc # XMLRPC-EPI module for PHP
+#  - php-xsl # XSL module for PHP (dummy)
+#  - php-zip # Zip module for PHP

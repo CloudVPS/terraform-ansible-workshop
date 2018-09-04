@@ -1,0 +1,17 @@
+---
+
+nginx_vhost:
+  example.com:
+    name: www.example.com
+#    docroot: /home/example/domains/www.example.com/public_html
+#    webuser: example
+#    prio: 500
+#    serveraliases:
+#      - sub-a.example.com
+
+#  stats:
+#    name: stats
+#    configfile: files/appserver/nginx-vhost/stats.conf
+#    prio: 999
+
+

@@ -3,36 +3,33 @@
 # Gather facts and check connectivity
 - hosts: all
   gather_facts: False
-  become: true
-  
+ 
   tasks:
-  - name: Disable timers for unattended upgrade, so that none will be triggered by the `date -s` call.
-    raw: systemctl disable --now {{item}}
-    with_items:
-      - 'apt-daily.timer'
-      - 'apt-daily-upgrade.timer'
-  
-  - name: Reload systemctl daemon to apply the new changes
-    raw: systemctl daemon-reload
-  
   - name: Wait for any possibly running unattended upgrade to finish
-    raw: systemd-run --property="After=apt-daily.service apt-daily-upgrade.service" --wait /bin/true
-  
-  - name: Purge unattended upgrades
-    raw: apt-get -y purge unattended-upgrades    
-  
-  - name: Update apt cache
-    raw: apt-get -y update
+    raw:  while pgrep unattended; do sleep 10; done;
+#    raw: systemd-run --property="After=apt-daily.service apt-daily-upgrade.service" --wait /bin/true
 
-  - name: install python 2
-    raw: until ping -c1 www.google.com &>/dev/null; do :; done; test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+  - name: install python 2 when cloud-init is ready
+    raw: until [ -f /var/lib/cloud/instance/boot-finished ] &>/dev/null; do :; done; test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+#    raw: until grep -q finished /var/log/cloud-init-output.log &>/dev/null; do :; done; test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+#    raw: until ping -c1 www.google.com &>/dev/null; do :; done; test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
 #    raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+    ignore_errors: yes
+
+  - name: Update and upgrade apt packages
+    apt:
+      upgrade: dist
+      update_cache: yes
+      cache_valid_time: 1 #One second e.a. always update
+    register: apt_result
+    retries: 5
+    until: apt_result is success
 
 - hosts: all
 
 - import_playbook: set_facts.yml
 - import_playbook: common.yml
 - import_playbook: loadbalancer.yml
-#- import_playbook: appserver.yml
+- import_playbook: appserver.yml
 #- import_playbook: sqlserver.yml
 

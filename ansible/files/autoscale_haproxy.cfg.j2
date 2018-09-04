@@ -1,28 +1,116 @@
-# Managed by Ansible, please do not edit manually.
+# {{ ansible_managed }} 
 
 global
+    log 127.0.0.1   local0 notice
+    stats socket     /var/run/haproxy.sock mode 0600 level admin
+    maxconn         40000
+    user            haproxy
+    group           haproxy
+    tune.ssl.default-dh-param 2048
     daemon
-    maxconn 2000
-    stats socket /var/run/haproxy.sock mode 0600 level admin
+
+# enable for A rating and 90-100% @May 2017 (android >= 4.4, IE >= 11)
+#    ssl-default-bind-options no-sslv3 no-tls-tickets force-tlsv12
+#    ssl-default-bind-ciphers ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:AES256-GCM-SHA384:AES256-SHA256:AES256-SHA:!aNULL:!MD5:!DSS
 
 defaults
-    timeout connect 5000ms
-    timeout client 50000ms
-    timeout server 50000ms
+    log             global
+    mode            tcp
+    option          tcplog
+    option          log-health-checks
+    retries         3
+    maxconn         20000
+
+    timeout http-request 5s  # In order to offer DoS protection, it may be required to lower the maximum accepted time
+    timeout connect 5s       # cover one or several TCP packet losses (eg: 4 or 5 seconds).
+    timeout client-fin 5s    # avoid keeping connections in FIN_WAIT state for too long
+    timeout client  30s      # cover one or several TCP packet losses (eg: 4 or 5 seconds). equal to the server timeout
+    timeout server  30s      # cover one or several TCP packet losses (eg: 4 or 5 seconds). equal to the client timeout
+    timeout tunnel  1h       # timeout to use with WebSocket and CONNECT
 
 frontend http-in
     mode http
     bind *:80
+
+# enable ssl
+#    bind *:443 ssl crt /etc/ssl/private/ no-sslv3 crt-ignore-err all strict-sni
+
+# Redirect if HTTPS is *not* used
+#    redirect scheme https code 301 if !{ ssl_fc }
+
+# enable STS when using 443
+#    acl secure dst_port eq 443
+#    rsprep ^Set-Cookie:\ (.*) Set-Cookie:\ \1;\ Secure if secure
+#    rspadd Strict-Transport-Security:\ max-age=31536000 if secure
+
+    option httplog
+    option http-server-close
+    option forwardfor #adds X-Forwarded-For
+    http-request add-header X-Real-IP %[src]
+    http-request set-header X-Forwarded-Host %[dst]
+    http-request set-header X-Forwarded-Port %[dst_port]
+    http-request set-header X-Forwarded-Proto https if { ssl_fc }
+    http-request set-header X-Forwarded-Proto http if !{ ssl_fc }
+
+# https://serversforhackers.com/c/letsencrypt-with-haproxy
+#    acl letsencrypt-acl path_beg /.well-known/acme-challenge/
+#    use_backend letsencrypt-backend if letsencrypt-acl
+
     default_backend web
 
 backend web
-    mode http
+    mode            http
+    fullconn        40000
+    balance         leastconn
+    cookie          SERVERID insert nocache indirect
+    #option          httpchk HEAD /health.php HTTP/1.1\r\nHost:\ localhost
+    #option          httpchk GET /health.php HTTP/1.1\r\nHost:\ test.eu
+    #http-check      expect rstatus (2|3)[0-9][0-9]
+    option          redispatch
+
+# enable STS for A+ rating and 90-100% @May 2017 (android >= 4.4, IE >= 11)
+# 16000000 seconds: a bit more than 6 months
+#    http-response set-header Strict-Transport-Security max-age=16000000;\ includeSubDomains;\ preload;
+
 {% for host in groups['web'] %}
-    server {{ ansible_hostname }} {{ hostvars[host]['access_ip_v4'] }}:80
+    server {{ hostvars[host]['name'] }} {{ hostvars[host]['access_ip_v4'] }}:80 check cookie {{ hostvars[host]['name'] }} rise 10 fall 3 slowstart 10m
 {% endfor %}
 
-listen admin
-    mode http
-    bind *:8080
-    stats enable
 
+frontend Statistics
+      mode http
+      bind *:8000
+      option contstats
+      default_backend HAProxy-Statistics
+
+{% for host in groups['web'] %}
+      acl to_{{ hostvars[host]['name'] }}_stats path_beg /{{ hostvars[host]['name'] }}/stats
+      use_backend {{ hostvars[host]['name'] }}_stats if to_{{ hostvars[host]['name'] }}_stats
+{% endfor %}
+
+{% for host in groups['web'] %}
+backend {{ hostvars[host]['name'] }}_stats
+      mode            http
+      server          {{ hostvars[host]['name'] }} {{ hostvars[host]['access_ip_v4'] }}:8000 check cookie {{ hostvars[host]['name'] }}
+      reqrep ^([^\ ]*\ /){{ hostvars[host]['name'] }}[/]?(.*)     \1\2
+#      acl white_list_web src -f /etc/haproxy/whitelist.lst
+#      http-request deny if !white_list_web
+{% endfor %}
+
+
+userlist UsersFor_HAProxyStatistics
+      group admin users admin
+      user admin insecure-password changeme
+
+
+backend HAProxy-Statistics
+      mode http
+      stats enable
+      stats uri /stats
+      stats refresh 10s
+      stats show-node
+      stats show-legends
+      acl AuthOkay_ReadOnly http_auth(UsersFor_HAProxyStatistics)
+      acl AuthOkay_Admin http_auth_group(UsersFor_HAProxyStatistics) admin
+      stats http-request auth realm HAProxy-Statistics unless AuthOkay_ReadOnly
+      stats admin if AuthOkay_Admin

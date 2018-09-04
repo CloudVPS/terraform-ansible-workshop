@@ -1,0 +1,23 @@
+---
+
+- hosts: web
+#  become: true
+
+# Define the vars, set the first host in the group as the redis-master for initial configuration
+  vars:
+    redis:
+      redismaster: "{{ hostvars[groups['web'][0]]['ansible_eth0']['ipv4']['address'] }}"
+      quorum: '1'
+
+  pre_tasks:
+    - name: install packages
+      package:
+        name: "{{ item }}"
+        state: present
+      with_items: "{{ packages }}"
+
+  roles:
+    - nginx-vhost
+    - redisserver
+    - redissentinel
+    - nrpe
