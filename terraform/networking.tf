@@ -8,7 +8,7 @@ resource "openstack_networking_subnet_v2" "subnet_internal" {
   network_id          = "${openstack_networking_network_v2.network_internal.id}"
   cidr                = "${var.subnet_cidr}"
   ip_version          = 4
-  dns_nameservers     = ["1.1.1.1", "1.0.0.1"]
+  dns_nameservers     = ["${var.primary_dns}", "${var.secondary_dns}"]
 }
 
 resource "openstack_networking_router_v2" "router_internal_to_external" {

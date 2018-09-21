@@ -15,7 +15,7 @@
 #        - '"%" not in item.key'
 
 
-    - name: Set facts by stripping the first dotted value from metadata
+    - name: Set facts by stripping "metadata." and joining with _
       set_fact:
         "{{item.key.split('.')[1:10] | join('_') }}": "{{ item.value }}"
       with_dict: "{{ hostvars[inventory_hostname] }}"

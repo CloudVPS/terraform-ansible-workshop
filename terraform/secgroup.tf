@@ -1,5 +1,8 @@
+
+## securitygroups with rules included
+
 resource "openstack_compute_secgroup_v2" "secgroup_ssh_public" {
-  name        = "${var.prefix}-secgroup_ssh_public"
+  name        = "${var.prefix}secgroup_ssh_public"
   description = "${var.prefix} ssh security group"
 
   rule {
@@ -11,7 +14,7 @@ resource "openstack_compute_secgroup_v2" "secgroup_ssh_public" {
 }
 
 resource "openstack_compute_secgroup_v2" "secgroup_ssh_private" {
-  name        = "${var.prefix}-secgroup_ssh_private"
+  name        = "${var.prefix}secgroup_ssh_private"
   description = "${var.prefix} ssh security group"
 
   rule {
@@ -23,7 +26,7 @@ resource "openstack_compute_secgroup_v2" "secgroup_ssh_private" {
 }
 
 resource "openstack_compute_secgroup_v2" "secgroup_icmp_public" {
-  name        = "${var.prefix}-secgroup_icmp_public"
+  name        = "${var.prefix}secgroup_icmp_public"
   description = "${var.prefix} ssh security group"
 
   rule {
@@ -35,7 +38,7 @@ resource "openstack_compute_secgroup_v2" "secgroup_icmp_public" {
 }
 
 resource "openstack_compute_secgroup_v2" "secgroup_icmp_private" {
-  name        = "${var.prefix}-secgroup_icmp_private"
+  name        = "${var.prefix}secgroup_icmp_private"
   description = "${var.prefix} ssh security group"
 
   rule {
@@ -47,9 +50,15 @@ resource "openstack_compute_secgroup_v2" "secgroup_icmp_private" {
 }
 
 resource "openstack_compute_secgroup_v2" "secgroup_web_public" {
-  name        = "${var.prefix}-secgroup_web_public"
+  name        = "${var.prefix}secgroup_web_public"
   description = "${var.prefix} webserver security group"
 
+  rule {
+    from_port   = 8000
+    to_port     = 8000
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
   rule {
     from_port   = 80
     to_port     = 80
@@ -65,7 +74,7 @@ resource "openstack_compute_secgroup_v2" "secgroup_web_public" {
 }
 
 resource "openstack_compute_secgroup_v2" "secgroup_web_private" {
-  name        = "${var.prefix}-secgroup_web_private"
+  name        = "${var.prefix}secgroup_web_private"
   description = "${var.prefix} webserver security group"
 
   rule {
@@ -83,7 +92,7 @@ resource "openstack_compute_secgroup_v2" "secgroup_web_private" {
 }
 
 resource "openstack_compute_secgroup_v2" "secgroup_db_private" {
-  name        = "${var.prefix}-secgroup_db_private"
+  name        = "${var.prefix}secgroup_db_private"
   description = "${var.prefix} webserver security group"
 
   rule {
