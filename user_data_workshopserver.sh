@@ -44,6 +44,25 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
     apt-get install -y docker-ce && \
     usermod -aG docker ubuntu || true
 
+# Install golang
+apt install -y golang
+
+# Set env. variables on next logon
+echo "export GOPATH=~/go
+TF_STATE=~/terraform-ansible-workshop/terraform/terraform.tfstate" >> /home/ubuntu/.bashrc
+echo "export GOPATH=~/go
+TF_STATE=~/terraform-ansible-workshop/terraform/terraform.tfstate" >> /root/.bashrc
+
+# Install terraform inventory
+export GOPATH=~/go; go get github.com/adammck/terraform-inventory
+
+# Clone the ansible roles
+git clone https://github.com/CloudVPS/ansible-roles.git /etc/ansible/roles/
+
+# Clone the workshop
+git clone https://github.com/CloudVPS/terraform-ansible-workshop.git 
+
+
 # Clean
 # apt-get clean && \
 #     rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
