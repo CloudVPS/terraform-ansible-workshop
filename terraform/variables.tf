@@ -1,4 +1,4 @@
-variable "key_pair"              { default = "", type = "string"}
+variable "key_pair"              { type = "string"}
 variable "prefix"                { default = "workshop-"}
 
 variable "subnet_cidr"           { default = "192.168.42.0/24"}

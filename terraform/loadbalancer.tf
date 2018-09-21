@@ -118,8 +118,8 @@ resource "openstack_compute_instance_v2" "lb" {
   ## Add the generated bastion key
   provisioner "remote-exec" {
     inline = [
-      "sudo echo '${openstack_compute_keypair_v2.keypair.public_key}' >> /root/.ssh/authorized_keys",
-      "sudo chmod 644 /root/.ssh/authorized_keys"
+      "sudo bash -c \"echo '${openstack_compute_keypair_v2.keypair.public_key}' >> /root/.ssh/authorized_keys\"",
+      "sudo bash -c \"chmod 644 /root/.ssh/authorized_keys\""
     ]
   }
   #provisioner "remote-exec" {
