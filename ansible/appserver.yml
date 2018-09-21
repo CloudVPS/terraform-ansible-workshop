@@ -1,7 +1,6 @@
 ---
 
 - hosts: web
-#  become: true
 
 # Define the vars, set the first host in the group as the redis-master for initial configuration
   vars:
@@ -15,6 +14,9 @@
         name: "{{ item }}"
         state: present
       with_items: "{{ packages }}"
+      register: apt_res
+      retries: 5
+      until: apt_res is success
 
   roles:
     - nginx-vhost
