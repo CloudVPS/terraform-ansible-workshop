@@ -62,6 +62,10 @@ git clone https://github.com/CloudVPS/ansible-roles.git /etc/ansible/roles/
 # Clone the workshop
 git clone https://github.com/CloudVPS/terraform-ansible-workshop.git /home/ubuntu/terraform-ansible-workshop/
 
+# Generate ssh keys and allow ssh to localhost
+ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N ""
+cat ~/.ssh/id_rsa >> ~/.ssh/authorized_keys
+
 
 # Clean
 # apt-get clean && \
