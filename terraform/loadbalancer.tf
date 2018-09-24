@@ -45,7 +45,7 @@
 resource "openstack_networking_port_v2" "port_ha_vip" {
   name              = "${var.prefix}port_ha_vip"
   network_id        = "${openstack_networking_network_v2.network_internal.id}"
-  security_group_ids = ["${var.default_secgroup_id}", "${openstack_compute_secgroup_v2.secgroup_web_public.id}", "${openstack_compute_secgroup_v2.secgroup_icmp_public.id}"]
+  security_group_ids = ["${data.openstack_networking_secgroup_v2.secgroup_default.id}", "${openstack_compute_secgroup_v2.secgroup_web_public.id}", "${openstack_compute_secgroup_v2.secgroup_icmp_public.id}"]
   admin_state_up    = "true"
 
   fixed_ip {
@@ -53,7 +53,7 @@ resource "openstack_networking_port_v2" "port_ha_vip" {
     "ip_address"    = "${var.vip_address}"
   }
 
-  depends_on        = ["openstack_networking_router_interface_v2.router_interface", "openstack_compute_secgroup_v2.secgroup_web_public", "openstack_compute_secgroup_v2.secgroup_icmp_public"]
+  depends_on        = ["data.openstack_networking_secgroup_v2.secgroup_default", "openstack_networking_router_interface_v2.router_interface", "openstack_compute_secgroup_v2.secgroup_web_public", "openstack_compute_secgroup_v2.secgroup_icmp_public"]
 
 }
 
@@ -61,7 +61,7 @@ resource "openstack_networking_port_v2" "port_lb" {
   count             = "${var.lb_count}"
   name              = "${var.prefix}lb-${count.index}-port"
   network_id        = "${openstack_networking_network_v2.network_internal.id}"
-  security_group_ids = ["${var.default_secgroup_id}", "${openstack_compute_secgroup_v2.secgroup_web_public.id}", "${openstack_compute_secgroup_v2.secgroup_icmp_public.id}"]
+  security_group_ids = ["${data.openstack_networking_secgroup_v2.secgroup_default.id}", "${openstack_compute_secgroup_v2.secgroup_web_public.id}", "${openstack_compute_secgroup_v2.secgroup_icmp_public.id}"]
   admin_state_up    = "true"
 
   fixed_ip {

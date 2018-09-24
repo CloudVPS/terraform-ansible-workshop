@@ -12,7 +12,6 @@ variable "floating_network_name" { default = "floating"}
 
 variable "image_name"            { default = "Ubuntu 18.04 (LTS)"}
 variable "flavor_name"           { default = "Small HD 2GB"}
-variable "default_secgroup_id"   { default = ""}
 variable "availability_zones"    { default = ["AMS-EQ1", "AMS-EQ3", "AMS-EU4"]}
 
 ## BASTION HOST
