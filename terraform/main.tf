@@ -54,7 +54,7 @@ resource "openstack_compute_floatingip_associate_v2" "fip_bastion" {
     user            = "${var.user}"
     host            = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
   }
-  ## Provisioner is done on the floating IP
+  ## Provisioning is done on the floating IP
   provisioner "remote-exec" {
     inline = [
       "apt update",
