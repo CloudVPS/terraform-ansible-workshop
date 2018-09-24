@@ -60,7 +60,7 @@ export GOPATH=~/go; go get github.com/adammck/terraform-inventory
 git clone https://github.com/CloudVPS/ansible-roles.git /etc/ansible/roles/
 
 # Clone the workshop
-git clone https://github.com/CloudVPS/terraform-ansible-workshop.git 
+git clone https://github.com/CloudVPS/terraform-ansible-workshop.git /home/ubuntu/terraform-ansible-workshop/
 
 
 # Clean

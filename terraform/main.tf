@@ -10,7 +10,7 @@ resource "openstack_compute_instance_v2" "bastion" {
   image_name        = "${var.image_name}"
   flavor_name       = "${var.flavor_name}"
   key_pair          = "${var.key_pair}"
-  user_data         = "#include\nhttps://raw.githubusercontent.com/ceesios/terraform-ansible-workshop/master/user_data_workshopserver.sh"
+#  user_data         = "#include\nhttps://raw.githubusercontent.com/ceesios/terraform-ansible-workshop/master/user_data_workshopserver.sh"
   security_groups   = ["default", "${openstack_compute_secgroup_v2.secgroup_ssh_public.name}"]
   network {
     name            = "${openstack_networking_network_v2.network_internal.name}"
@@ -55,14 +55,12 @@ resource "openstack_compute_floatingip_associate_v2" "fip_bastion" {
     host            = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
   }
   ## Provisioner is done on the floating IP
-#  provisioner "remote-exec" {
-#    inline = [
-#      "sudo echo '${openstack_compute_keypair_v2.keypair.private_key}' >> /root/.ssh/id_rsa",
-#      "sudo chmod 600 /root/.ssh/id_rsa",
-#      "sudo echo '${openstack_compute_keypair_v2.keypair.public_key}' >> /root/.ssh/id_rsa.pub",
-#      "sudo chmod 644 /root/.ssh/id_rsa.pub"
-#    ]
-#  }
+  provisioner "remote-exec" {
+    inline = [
+      "apt update",
+      "apt install python -y"
+    ]
+  }
 }
 
 
@@ -74,31 +72,14 @@ resource "openstack_compute_instance_v2" "web" {
   flavor_name       = "${var.flavor_name}"
   key_pair          = "${var.key_pair}"
   security_groups   = ["default", "${openstack_compute_secgroup_v2.secgroup_ssh_private.name}", "${openstack_compute_secgroup_v2.secgroup_icmp_private.name}"]
-  user_data         = "${file("bootstrap.sh")}"
+  user_data         = "${file("user_data_web.sh")}"
 
   network {
     name = "${openstack_networking_network_v2.network_internal.name}"
   }
 
-  connection {
-    type                = "ssh"
-    user                = "${var.user}"
-#    private_key         = "${var.key_pair}"
-    bastion_host        = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
-    bastion_port        = 22
-    bastion_user        = "${var.user}"
-
-  }
-
   depends_on        = ["openstack_compute_secgroup_v2.secgroup_ssh_private", "openstack_compute_secgroup_v2.secgroup_icmp_private", "openstack_compute_instance_v2.bastion"]
 
-  ## Add the generated bastion key to authorized_keys
-#  provisioner "remote-exec" {
-#    inline = [
-#      "sudo echo '${openstack_compute_keypair_v2.keypair.public_key}' >> /root/.ssh/authorized_keys",
-#      "sudo chmod 644 /root/.ssh/authorized_keys"
-#    ]
-#  }
 }
 
 
@@ -110,24 +91,12 @@ resource "openstack_compute_instance_v2" "db" {
   flavor_name       = "${var.flavor_name}"
   key_pair          = "${var.key_pair}"
   security_groups   = [ "default"]
+  user_data         = "${file("user_data_common.sh")}"
 
   network {
     name = "${openstack_networking_network_v2.network_internal.name}"
   }
 
-  connection {
-    type            = "ssh"
-    user            = "${var.user}"
-    bastion_host    = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
-  }
-
   depends_on        = ["openstack_compute_instance_v2.bastion"]
 
-  ## Add the generated bastion key to authorized_keys
-#  provisioner "remote-exec" {
-#    inline = [
-#      "sudo echo '${openstack_compute_keypair_v2.keypair.public_key}' >> /root/.ssh/authorized_keys",
-#      "sudo chmod 644 /root/.ssh/authorized_keys"
-#    ]
-#  }
 }
