@@ -55,6 +55,8 @@ TF_STATE=~/terraform-ansible-workshop/terraform/terraform.tfstate" >> /root/.bas
 
 # Install terraform inventory
 export GOPATH=~/go; go get github.com/adammck/terraform-inventory
+sudo su - ubuntu -c "export GOPATH=~/go; go get github.com/adammck/terraform-inventory"
+
 
 # Clone the ansible roles
 git clone https://github.com/CloudVPS/ansible-roles.git /etc/ansible/roles/
