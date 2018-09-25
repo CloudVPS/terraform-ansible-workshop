@@ -55,12 +55,18 @@ TF_STATE=~/terraform-ansible-workshop/terraform/terraform.tfstate" >> /root/.bas
 
 # Install terraform inventory
 export GOPATH=~/go; go get github.com/adammck/terraform-inventory
+sudo su - ubuntu -c "export GOPATH=~/go; go get github.com/adammck/terraform-inventory"
+
 
 # Clone the ansible roles
 git clone https://github.com/CloudVPS/ansible-roles.git /etc/ansible/roles/
 
 # Clone the workshop
-git clone https://github.com/CloudVPS/terraform-ansible-workshop.git 
+git clone https://github.com/CloudVPS/terraform-ansible-workshop.git /home/ubuntu/terraform-ansible-workshop/
+
+# Generate ssh keys and allow ssh to localhost
+ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N ""
+cat ~/.ssh/id_rsa >> ~/.ssh/authorized_keys
 
 
 # Clean
