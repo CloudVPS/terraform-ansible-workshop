@@ -1,3 +1,8 @@
+## Existing securitygroup
+data "openstack_networking_secgroup_v2" "secgroup_default" {
+  name = "default"
+}
+
 
 ## securitygroups with rules included
 
