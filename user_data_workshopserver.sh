@@ -68,6 +68,8 @@ git clone https://github.com/CloudVPS/terraform-ansible-workshop.git /home/ubunt
 ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N ""
 cat ~/.ssh/id_rsa >> ~/.ssh/authorized_keys
 
+sudo su - ubuntu -c "ssh-keygen -b 2048 -t rsa -f /home/ubuntu/.ssh/id_rsa -q -N ''"
+cat /home/ubuntu/.ssh/id_rsa >> /root/.ssh/authorized_keys
 
 # Clean
 # apt-get clean && \
