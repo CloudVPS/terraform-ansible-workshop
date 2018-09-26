@@ -20,6 +20,7 @@ resource "openstack_compute_instance_v2" "bastion" {
     type            = "ssh"
     user            = "${var.user}"
     host            = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
+    private_key     = "${file("~/.ssh/id_rsa")}"
   }
   # Enter the bastion host into .ssh/config
   provisioner "local-exec" {
@@ -53,12 +54,13 @@ resource "openstack_compute_floatingip_associate_v2" "fip_bastion" {
     type            = "ssh"
     user            = "${var.user}"
     host            = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
-  }
+    private_key     = "${file("~/.ssh/id_rsa")}"
+}
   ## Provisioning is done on the floating IP
   provisioner "remote-exec" {
     inline = [
-      "apt update",
-      "apt install python -y"
+      "sudo apt update",
+      "sudo apt install python -y"
     ]
   }
 }
