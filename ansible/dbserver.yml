@@ -1,0 +1,16 @@
+---
+
+- hosts: db.0
+  roles:
+    - { role: jgeusebroek.mariadb, mariadb_galera_role: primary }
+#    - jgeusebroek.mariadb
+
+- hosts: db:!db.0
+  serial: 1
+  vars:
+    mariadb_galera_role: secondary
+    mariadb_galera_primary: "{{ hostvars[groups['db'][0]]['ansible_default_ipv4']['address'] }}"
+
+  roles:
+    - jgeusebroek.mariadb
+

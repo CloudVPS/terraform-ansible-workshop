@@ -27,9 +27,9 @@
 
 - hosts: all
 
-- import_playbook: set_facts.yml
-- import_playbook: common.yml
-- import_playbook: loadbalancer.yml
-- import_playbook: appserver.yml
+#- import_playbook: set_facts.yml
+#- import_playbook: common.yml
+#- import_playbook: loadbalancer.yml
+#- import_playbook: appserver.yml
 #- import_playbook: sqlserver.yml
 
