@@ -6,6 +6,9 @@ export DEBIAN_FRONTEND=noninteractive
 TERRAFORM_VERSION=0.11.7
 TERRAFORM_CHECKSUM=6b8ce67647a59b2a3f70199c304abca0ddec0e49fd060944c26f666298e23418
 
+# Set temporary google DNS
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+
 # Upgrade packages
 apt-get update && \
     apt-get upgrade -y -o Dpkg::Options::="--force-confold"
@@ -66,10 +69,10 @@ git clone https://github.com/CloudVPS/terraform-ansible-workshop.git /home/ubunt
 
 # Generate ssh keys and allow ssh to localhost
 ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N ""
-cat ~/.ssh/id_rsa >> ~/.ssh/authorized_keys
+cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 
 sudo su - ubuntu -c "ssh-keygen -b 2048 -t rsa -f /home/ubuntu/.ssh/id_rsa -q -N ''"
-cat /home/ubuntu/.ssh/id_rsa >> /root/.ssh/authorized_keys
+cat /home/ubuntu/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 
 # Clean
 # apt-get clean && \
