@@ -6,13 +6,16 @@ export DEBIAN_FRONTEND=noninteractive
 TERRAFORM_VERSION=0.11.7
 TERRAFORM_CHECKSUM=6b8ce67647a59b2a3f70199c304abca0ddec0e49fd060944c26f666298e23418
 
-# Set temporary google DNS
-echo "nameserver 8.8.8.8" > /etc/resolv.conf
-sed -i 's/^#DNS=/DNS=8\.8\.8\.8/g' /etc/systemd/resolved.conf
+# Disable ipv6
+echo "net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1" >> /etc/sysctl.conf
+sysctl -p
+
 
 # Upgrade packages
 apt-get update && \
-    apt-get upgrade -y -o Dpkg::Options::="--force-confold"
+    apt-get upgrade -y -o Dpkg::Options::="--force-confold" || true
 
 # Install packages
 apt-get install -y \
@@ -21,25 +24,25 @@ apt-get install -y \
     curl \
     software-properties-common \
     unzip \
-    wget
+    wget || true
 
 # Install Git & Gitflow toolset
-apt-get install -y git-flow
+apt-get install -y git-flow || true
 
 # Install OpenStack client
-apt-get install -y python-openstackclient
+apt-get install -y python-openstackclient || true
 
 # Install Terraform
 wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
     echo "${TERRAFORM_CHECKSUM}  terraform_${TERRAFORM_VERSION}_linux_amd64.zip" > terraform.checksum && \
     sha256sum --strict --check terraform.checksum && \
     unzip -u terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/local/bin && \
-    rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip terraform.checksum
+    rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip terraform.checksum || true
 
 # Install Ansible
 apt-add-repository -y ppa:ansible/ansible && \
     apt-get update && \
-    apt-get install -y ansible
+    apt-get install -y ansible || true
 
 # Install Docker
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
@@ -49,7 +52,7 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
     usermod -aG docker ubuntu || true
 
 # Install golang
-apt install -y golang
+apt install -y golang || true
 
 # Set env. variables on next logon
 echo "export GOPATH=~/go
@@ -63,14 +66,14 @@ sudo su - ubuntu -c "export GOPATH=~/go; go get github.com/adammck/terraform-inv
 
 
 # Clone the ansible roles
-git clone https://github.com/CloudVPS/ansible-roles.git /etc/ansible/roles/
+git clone https://github.com/CloudVPS/ansible-roles.git /etc/ansible/roles/ || true
 
 # Clone the workshop
-git clone https://github.com/CloudVPS/terraform-ansible-workshop.git /root/terraform-ansible-workshop/
-sudo su - ubuntu -c "git clone https://github.com/CloudVPS/terraform-ansible-workshop.git /home/ubuntu/terraform-ansible-workshop/"
+git clone https://github.com/CloudVPS/terraform-ansible-workshop.git /root/terraform-ansible-workshop/ || true
+sudo su - ubuntu -c "git clone https://github.com/CloudVPS/terraform-ansible-workshop.git /home/ubuntu/terraform-ansible-workshop/" || true
 
 # Generate ssh keys and allow ssh to localhost
-ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N ""
+ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N "" 
 cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 
 sudo su - ubuntu -c "ssh-keygen -b 2048 -t rsa -f /home/ubuntu/.ssh/id_rsa -q -N ''"

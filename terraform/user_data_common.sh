@@ -1,4 +1,4 @@
-#! /bin/sh
-apt update
-DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
-apt install python -y
+#!/bin/bash
+
+# Disable ipv6
+printf "net.ipv6.conf.all.disable_ipv6 = 1\nnet.ipv6.conf.default.disable_ipv6 = 1\nnet.ipv6.conf.lo.disable_ipv6 = 1" >> /etc/sysctl.conf && \sysctl -p || true
