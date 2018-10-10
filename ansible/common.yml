@@ -3,7 +3,6 @@
 - hosts: all
 
   roles:
-    - nrpe
     - ntp
     - rsyslog-client
     - snmp

@@ -19,7 +19,7 @@ resource "openstack_compute_instance_v2" "bastion" {
   connection {
     type            = "ssh"
     user            = "${var.user}"
-    host            = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
+    host            = "${openstack_networking_floatingip_v2.floatip_bastion.address}" 
     private_key     = "${file("~/.ssh/id_rsa")}"
   }
   # Enter the bastion host into .ssh/config
@@ -49,16 +49,10 @@ resource "openstack_compute_floatingip_associate_v2" "fip_bastion" {
   floating_ip = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
   instance_id = "${openstack_compute_instance_v2.bastion.id}"
 
-  # Provision after associating a floating IP
-  connection {
-    type            = "ssh"
-    user            = "${var.user}"
-    host            = "${openstack_networking_floatingip_v2.floatip_bastion.address}"
-    private_key     = "${file("~/.ssh/id_rsa")}"
-}
-  ## Provisioning is done on the floating IP
+  ## Remote provisioning is done on the floating IP
   provisioner "remote-exec" {
     inline = [
+      "printf 'net.ipv6.conf.all.disable_ipv6 = 1\nnet.ipv6.conf.default.disable_ipv6 = 1\nnet.ipv6.conf.lo.disable_ipv6 = 1' >> /etc/sysctl.conf && sysctl -p || true",
       "sudo apt update",
       "sudo apt install python -y"
     ]

@@ -20,6 +20,5 @@
 
   roles:
     - nginx-vhost
-    - redisserver
-    - redissentinel
-    - nrpe
+#    - redisserver
+#    - redissentinel
